@@ -1,0 +1,14 @@
+[
+  {
+    "id": "sample-sql-1",
+    "subject": "SQL",
+    "title": "Sample – SQL Midterm (delete me)",
+    "date": "2026-11-20",
+    "score": 18,
+    "total": 20,
+    "topics": ["SELECT", "JOIN", "GROUP BY"],
+    "body": "Q1. List all students older than 20.\n```sql\nSELECT * FROM students WHERE age > 20;\n```\nQ2. Count students per department.\n```sql\nSELECT dept, COUNT(*) FROM students GROUP BY dept;\n```",
+    "notes": "I forgot HAVING in one question. Review it before the final.",
+    "image": ""
+  }
+]

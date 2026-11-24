@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Midterm Exam Blog</title>
+  <meta name="description" content="A personal blog to record and review my midterm exams.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Midterm Exam Journal</p>
+      <h1>My Midterm Exam Blog</h1>
+      <p class="sub">Record every midterm, keep the questions, my answers and what I learned.</p>
+      <div class="stats" id="stats"></div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <nav class="tabs" id="tabs" aria-label="Subjects"></nav>
+
+    <div class="toolbar">
+      <input type="search" id="search" placeholder="Search exams, topics, questions…" aria-label="Search">
+      <button class="btn primary" id="addBtn">+ Add exam</button>
+    </div>
+
+    <section id="list" class="list" aria-live="polite"></section>
+
+    <details class="admin">
+      <summary>Publish &amp; backup (GitHub)</summary>
+      <p>Exams you add are saved in <b>this browser</b>. To make them show for everyone on GitHub Pages: click <b>Export JSON</b>, replace <code>data/exams.json</code> in your repo with the downloaded file, then commit and push.</p>
+      <div class="row">
+        <button class="btn" id="exportBtn">Export JSON</button>
+        <label class="btn">Import JSON<input type="file" id="importFile" accept="application/json" hidden></label>
+      </div>
+    </details>
+  </main>
+
+  <footer class="wrap foot">Made with HTML, CSS &amp; JavaScript · Hosted on GitHub Pages</footer>
+
+  <dialog id="dlg">
+    <form id="form" method="dialog">
+      <h2 id="dlgTitle">Add exam</h2>
+      <div class="grid">
+        <label>Subject
+          <select id="f-subject" required></select>
+        </label>
+        <label>Title
+          <input id="f-title" required placeholder="e.g. Midterm – Chapters 1-4">
+        </label>
+        <label>Date
+          <input id="f-date" type="date" required>
+        </label>
+        <label>Score
+          <input id="f-score" type="number" min="0" step="0.5" placeholder="e.g. 18">
+        </label>
+        <label>Out of
+          <input id="f-total" type="number" min="0" step="0.5" placeholder="e.g. 20">
+        </label>
+        <label>Topics (comma separated)
+          <input id="f-topics" placeholder="Sets, Relations, Logic">
+        </label>
+      </div>
+      <label>Questions &amp; my answers
+        <textarea id="f-body" rows="9" placeholder="Write questions and answers here.&#10;For code use triple backticks:&#10;```sql&#10;SELECT * FROM students;&#10;```"></textarea>
+      </label>
+      <label>What I learned / mistakes
+        <textarea id="f-notes" rows="3"></textarea>
+      </label>
+      <label>Image link (optional – photo of the exam paper)
+        <input id="f-image" type="url" placeholder="https://… or images/exam1.jpg">
+      </label>
+      <div class="row end">
+        <button class="btn" type="button" id="cancelBtn">Cancel</button>
+        <button class="btn primary" type="submit" id="saveBtn" value="save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

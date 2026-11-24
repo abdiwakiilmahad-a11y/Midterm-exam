@@ -1,0 +1,64 @@
+:root{
+  --bg:#f6f7fb; --card:#fff; --ink:#1b1f2a; --muted:#667085; --line:#e4e7ee;
+  --accent:#4f46e5; --accent-ink:#fff; --good:#16a34a; --mid:#d97706; --bad:#dc2626;
+  --code:#0f172a; --code-ink:#e2e8f0;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0f1220;--card:#171b2e;--ink:#e8eaf3;--muted:#9aa3b8;--line:#272c45;--accent:#818cf8;--accent-ink:#0f1220;--code:#0a0d1a}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:0 16px}
+.hero{background:linear-gradient(135deg,#4f46e5,#7c3aed 60%,#db2777);color:#fff;padding:48px 0 36px}
+.hero h1{margin:.1em 0;font-size:clamp(1.8rem,5vw,2.8rem)}
+.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:.8rem;opacity:.85;margin:0}
+.sub{opacity:.92;margin:0 0 18px}
+.stats{display:flex;gap:12px;flex-wrap:wrap}
+.stat{background:rgba(255,255,255,.16);border-radius:12px;padding:8px 16px}
+.stat b{display:block;font-size:1.4rem;line-height:1.2}
+.stat span{font-size:.8rem;opacity:.9}
+
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:18px 0 6px;scrollbar-width:thin}
+.tab{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;font:inherit;font-size:.92rem}
+.tab.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tab small{opacity:.7;margin-left:4px}
+
+.toolbar{display:flex;gap:10px;margin:12px 0 18px}
+.toolbar input{flex:1}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+.btn{display:inline-block;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 16px;border-radius:10px;cursor:pointer;font:inherit;white-space:nowrap}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.btn.danger{color:var(--bad)}
+.btn.sm{padding:4px 10px;font-size:.85rem}
+
+.list{display:grid;gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+.card header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.card h3{margin:2px 0 4px;font-size:1.2rem}
+.badge{display:inline-block;font-size:.75rem;font-weight:600;padding:2px 10px;border-radius:999px;background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}
+.meta{color:var(--muted);font-size:.88rem}
+.score{font-size:1.5rem;font-weight:700;text-align:right}
+.score.good{color:var(--good)}.score.mid{color:var(--mid)}.score.bad{color:var(--bad)}
+.score small{display:block;font-size:.75rem;font-weight:400;color:var(--muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.chip{font-size:.78rem;border:1px solid var(--line);border-radius:6px;padding:1px 8px;color:var(--muted)}
+.body p{margin:.5em 0;white-space:pre-wrap}
+.body h4{margin:1em 0 .2em;font-size:.95rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+pre{background:var(--code);color:var(--code-ink);border-radius:10px;padding:12px 14px;overflow-x:auto;font:.88rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.card img{max-width:100%;border-radius:10px;margin-top:10px;border:1px solid var(--line)}
+.actions{display:flex;gap:8px;margin-top:12px}
+.empty{text-align:center;color:var(--muted);padding:48px 16px;border:2px dashed var(--line);border-radius:16px}
+
+.admin{margin:28px 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.admin summary{cursor:pointer;font-weight:600}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}.row.end{justify-content:flex-end}
+.foot{text-align:center;color:var(--muted);font-size:.85rem;padding:24px 16px 40px}
+
+dialog{border:none;border-radius:16px;padding:0;width:min(640px,94vw);background:var(--card);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(10,12,25,.55)}
+dialog form{padding:20px;display:grid;gap:12px;max-height:90vh;overflow:auto}
+dialog h2{margin:0}
+label{display:grid;gap:4px;font-size:.88rem;color:var(--muted)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.grid{grid-template-columns:1fr}.toolbar{flex-direction:column}}
