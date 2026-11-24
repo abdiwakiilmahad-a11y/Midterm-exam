@@ -1,174 +1,323 @@
-(() => {
-  const SUBJECTS = ["Discrete Math", "HTML", "RDBMS", "SQL", "Academic Writing", "Physics", "C++"];
-  const KEY = "midterm-blog-local-v1";
-  const $ = (id) => document.getElementById(id);
+const ACCOUNT_KEY = "midterm_student_account";
+const SESSION_KEY = "midterm_logged_in_session";
+const EXAMS_KEY = "midterm_exam_records_v1";
 
-  let published = [];   // from data/exams.json
-  let local = [];       // saved in this browser
-  let tab = "All";
-  let editingId = null;
+let exams = [];
+let activeFilter = "All";
 
-  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const safeUrl = (u) => /^(https?:\/\/|[\w./-]+$)/i.test(u || "") ? u : "";
+// DOM Elements
+const authScreen = document.getElementById("authScreen");
+const appScreen = document.getElementById("appScreen");
+const tabLogin = document.getElementById("tabLogin");
+const tabRegister = document.getElementById("tabRegister");
+const loginForm = document.getElementById("loginForm");
+const registerForm = document.getElementById("registerForm");
+const authError = document.getElementById("authError");
 
-  function loadLocal() {
-    try { local = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { local = []; }
+// Switch Auth Tabs
+tabLogin.addEventListener("click", () => {
+  tabLogin.classList.add("active");
+  tabRegister.classList.remove("active");
+  loginForm.classList.remove("hidden");
+  registerForm.classList.add("hidden");
+  authError.classList.add("hidden");
+});
+
+tabRegister.addEventListener("click", () => {
+  tabRegister.classList.add("active");
+  tabLogin.classList.remove("active");
+  registerForm.classList.remove("hidden");
+  loginForm.classList.add("hidden");
+  authError.classList.add("hidden");
+});
+
+function showAuthError(msg) {
+  authError.textContent = msg;
+  authError.classList.remove("hidden");
+}
+
+// Register Account
+registerForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const account = {
+    name: document.getElementById("regName").value.trim(),
+    studentId: document.getElementById("regId").value.trim(),
+    username: document.getElementById("regUser").value.trim().toLowerCase(),
+    pin: document.getElementById("regPin").value
+  };
+  localStorage.setItem(ACCOUNT_KEY, JSON.stringify(account));
+  localStorage.setItem(SESSION_KEY, JSON.stringify(account));
+  openDashboard(account);
+});
+
+// Log In
+loginForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const saved = JSON.parse(localStorage.getItem(ACCOUNT_KEY) || "null");
+  const user = document.getElementById("loginUser").value.trim().toLowerCase();
+  const pin = document.getElementById("loginPin").value;
+
+  if (!saved) {
+    showAuthError("No account found yet. Click 'Create Account' or 'Quick Demo Student Login'.");
+    return;
   }
-  function saveLocal() {
-    try { localStorage.setItem(KEY, JSON.stringify(local)); }
-    catch { alert("Could not save in this browser. Use Export JSON to keep your data."); }
+  if (saved.username === user && saved.pin === pin) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(saved));
+    openDashboard(saved);
+  } else {
+    showAuthError("Incorrect username or password/PIN.");
   }
-  const all = () => {
-    const ids = new Set(local.map((e) => e.id));
-    return [...local, ...published.filter((e) => !ids.has(e.id))]
-      .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+});
+
+// Demo Login
+document.getElementById("demoLoginBtn").addEventListener("click", () => {
+  const demoAccount = {
+    name: "CS Student",
+    studentId: "MID-2026",
+    username: "student",
+    pin: "1234"
+  };
+  if (!localStorage.getItem(ACCOUNT_KEY)) {
+    localStorage.setItem(ACCOUNT_KEY, JSON.stringify(demoAccount));
+  }
+  localStorage.setItem(SESSION_KEY, JSON.stringify(demoAccount));
+  openDashboard(demoAccount);
+});
+
+// Log Out
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  localStorage.removeItem(SESSION_KEY);
+  appScreen.classList.add("hidden");
+  authScreen.classList.remove("hidden");
+});
+
+// Grade Calculation
+function getGrade(score, maxScore) {
+  const pct = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+  let letter = "F";
+  if (pct >= 90) letter = "A";
+  else if (pct >= 80) letter = "B";
+  else if (pct >= 70) letter = "C";
+  else if (pct >= 60) letter = "D";
+  return { pct, letter };
+}
+
+function updateLiveGrade() {
+  const s = parseFloat(document.getElementById("score").value);
+  const m = parseFloat(document.getElementById("maxScore").value);
+  const preview = document.getElementById("liveGrade");
+  if (!isNaN(s) && !isNaN(m) && m > 0) {
+    const { pct, letter } = getGrade(s, m);
+    preview.textContent = `${pct}% (${letter})`;
+  } else {
+    preview.textContent = "—";
+  }
+}
+
+document.getElementById("score").addEventListener("input", updateLiveGrade);
+document.getElementById("maxScore").addEventListener("input", updateLiveGrade);
+
+// Load Initial Data (from localStorage or exams.json fallback)
+async function loadExams() {
+  const local = localStorage.getItem(EXAMS_KEY);
+  if (local) {
+    exams = JSON.parse(local);
+    renderAll();
+    return;
+  }
+  try {
+    const res = await fetch("exams.json");
+    exams = await res.json();
+  } catch {
+    exams = [];
+  }
+  saveExams();
+  renderAll();
+}
+
+function saveExams() {
+  localStorage.setItem(EXAMS_KEY, JSON.stringify(exams));
+}
+
+// Save or Update Exam Form
+document.getElementById("examForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const editId = document.getElementById("editId").value;
+  const entry = {
+    id: editId || String(Date.now()),
+    subject: document.getElementById("subject").value,
+    date: document.getElementById("examDate").value,
+    score: parseFloat(document.getElementById("score").value),
+    maxScore: parseFloat(document.getElementById("maxScore").value),
+    notes: document.getElementById("notes").value.trim()
   };
 
-  async function loadPublished() {
-    try {
-      const r = await fetch("data/exams.json", { cache: "no-store" });
-      if (r.ok) published = await r.json();
-    } catch { published = []; }
+  if (editId) {
+    exams = exams.map((item) => (item.id === editId ? entry : item));
+  } else {
+    exams.unshift(entry);
   }
 
-  // body text -> html, supports ```lang code fences
-  function renderBody(text) {
-    if (!text) return "";
-    return text.split(/```/).map((part, i) => {
-      if (i % 2) return "<pre><code>" + esc(part.replace(/^[\w+-]*\n/, "")) + "</code></pre>";
-      return part.trim() ? "<p>" + esc(part.trim()) + "</p>" : "";
-    }).join("");
-  }
+  saveExams();
+  resetForm();
+  renderAll();
+});
 
-  function pct(e) { return e.total ? (e.score / e.total) * 100 : null; }
+function resetForm() {
+  document.getElementById("examForm").reset();
+  document.getElementById("editId").value = "";
+  document.getElementById("maxScore").value = 50;
+  document.getElementById("examDate").valueAsDate = new Date();
+  document.getElementById("formTitle").textContent = "Record New Midterm Exam";
+  document.getElementById("saveBtn").textContent = "Save Midterm Record";
+  document.getElementById("cancelEditBtn").classList.add("hidden");
+  updateLiveGrade();
+}
 
-  function renderStats(list) {
-    const graded = list.filter((e) => pct(e) !== null && e.score !== "" && e.score != null);
-    const avg = graded.length ? Math.round(graded.reduce((s, e) => s + pct(e), 0) / graded.length) : null;
-    $("stats").innerHTML =
-      `<div class="stat"><b>${list.length}</b><span>Exams recorded</span></div>` +
-      `<div class="stat"><b>${new Set(list.map((e) => e.subject)).size}/${SUBJECTS.length}</b><span>Subjects covered</span></div>` +
-      `<div class="stat"><b>${avg === null ? "–" : avg + "%"}</b><span>Average score</span></div>`;
-  }
+document.getElementById("cancelEditBtn").addEventListener("click", resetForm);
 
-  function renderTabs(list) {
-    const names = ["All", ...SUBJECTS];
-    $("tabs").innerHTML = names.map((n) => {
-      const c = n === "All" ? list.length : list.filter((e) => e.subject === n).length;
-      return `<button class="tab ${n === tab ? "on" : ""}" data-t="${esc(n)}">${esc(n)}<small>${c}</small></button>`;
-    }).join("");
-  }
+// Filter & Search
+document.getElementById("filterPills").addEventListener("click", (e) => {
+  if (!e.target.classList.contains("pill")) return;
+  document.querySelectorAll(".pill").forEach((p) => p.classList.remove("active"));
+  e.target.classList.add("active");
+  activeFilter = e.target.dataset.subject;
+  renderAll();
+});
 
-  function render() {
-    const list = all();
-    renderStats(list);
-    renderTabs(list);
-    const q = $("search").value.trim().toLowerCase();
-    const shown = list.filter((e) =>
-      (tab === "All" || e.subject === tab) &&
-      (!q || [e.title, e.subject, (e.topics || []).join(" "), e.body, e.notes].join(" ").toLowerCase().includes(q)));
+document.getElementById("searchInput").addEventListener("input", renderAll);
 
-    if (!shown.length) {
-      $("list").innerHTML = `<div class="empty">No exams here yet.<br>Click <b>+ Add exam</b> to record your first ${tab === "All" ? "midterm" : esc(tab) + " midterm"}.</div>`;
-      return;
-    }
-    const localIds = new Set(local.map((e) => e.id));
-    $("list").innerHTML = shown.map((e) => {
-      const p = pct(e);
-      const cls = p === null ? "" : p >= 75 ? "good" : p >= 50 ? "mid" : "bad";
-      const hasScore = e.score !== "" && e.score != null && e.total;
-      const img = safeUrl(e.image);
-      return `<article class="card">
-        <header>
-          <div>
-            <span class="badge">${esc(e.subject)}</span>
-            <h3>${esc(e.title)}</h3>
-            <div class="meta">${esc(e.date || "")}</div>
-          </div>
-          ${hasScore ? `<div class="score ${cls}">${esc(e.score)}/${esc(e.total)}<small>${Math.round(p)}%</small></div>` : ""}
-        </header>
-        ${(e.topics || []).length ? `<div class="chips">${e.topics.map((t) => `<span class="chip">${esc(t)}</span>`).join("")}</div>` : ""}
-        <div class="body">
-          ${e.body ? `<h4>Questions &amp; answers</h4>${renderBody(e.body)}` : ""}
-          ${e.notes ? `<h4>What I learned</h4>${renderBody(e.notes)}` : ""}
-        </div>
-        ${img ? `<img src="${esc(img)}" alt="Exam paper: ${esc(e.title)}" loading="lazy">` : ""}
-        ${localIds.has(e.id) ? `<div class="actions"><button class="btn sm" data-edit="${esc(e.id)}">Edit</button><button class="btn sm danger" data-del="${esc(e.id)}">Delete</button></div>` : ""}
-      </article>`;
-    }).join("");
-  }
-
-  // ---- form ----
-  function openForm(entry) {
-    editingId = entry ? entry.id : null;
-    $("dlgTitle").textContent = entry ? "Edit exam" : "Add exam";
-    $("f-subject").innerHTML = SUBJECTS.map((s) => `<option>${esc(s)}</option>`).join("");
-    $("f-subject").value = entry ? entry.subject : (SUBJECTS.includes(tab) ? tab : SUBJECTS[0]);
-    $("f-title").value = entry?.title || "";
-    $("f-date").value = entry?.date || new Date().toISOString().slice(0, 10);
-    $("f-score").value = entry?.score ?? "";
-    $("f-total").value = entry?.total ?? "";
-    $("f-topics").value = (entry?.topics || []).join(", ");
-    $("f-body").value = entry?.body || "";
-    $("f-notes").value = entry?.notes || "";
-    $("f-image").value = entry?.image || "";
-    $("dlg").showModal();
-  }
-
-  $("form").addEventListener("submit", (ev) => {
-    ev.preventDefault();
-    const num = (v) => (v === "" ? "" : Number(v));
-    const entry = {
-      id: editingId || "e" + Date.now(),
-      subject: $("f-subject").value,
-      title: $("f-title").value.trim(),
-      date: $("f-date").value,
-      score: num($("f-score").value),
-      total: num($("f-total").value),
-      topics: $("f-topics").value.split(",").map((t) => t.trim()).filter(Boolean),
-      body: $("f-body").value,
-      notes: $("f-notes").value,
-      image: $("f-image").value.trim(),
-    };
-    local = local.filter((e) => e.id !== entry.id);
-    local.push(entry);
-    saveLocal();
-    $("dlg").close();
-    tab = entry.subject;
-    render();
+// Render Stats & Cards
+function renderAll() {
+  const query = document.getElementById("searchInput").value.toLowerCase();
+  const filtered = exams.filter((item) => {
+    const matchSub = activeFilter === "All" || item.subject === activeFilter;
+    const matchText =
+      item.subject.toLowerCase().includes(query) ||
+      item.notes.toLowerCase().includes(query);
+    return matchSub && matchText;
   });
 
-  // ---- events ----
-  $("addBtn").onclick = () => openForm();
-  $("cancelBtn").onclick = () => $("dlg").close();
-  $("search").oninput = render;
-  $("tabs").onclick = (e) => { const b = e.target.closest("[data-t]"); if (b) { tab = b.dataset.t; render(); } };
-  $("list").onclick = (e) => {
-    const ed = e.target.closest("[data-edit]"), del = e.target.closest("[data-del]");
-    if (ed) openForm(local.find((x) => x.id === ed.dataset.edit));
-    if (del && confirm("Delete this exam entry?")) {
-      local = local.filter((x) => x.id !== del.dataset.del); saveLocal(); render();
+  // Update Stats
+  const uniqueSubjects = new Set(exams.map((e) => e.subject));
+  document.getElementById("statCount").textContent = `${uniqueSubjects.size} / 7 Subjects`;
+
+  if (exams.length > 0) {
+    let totalPct = 0;
+    let best = exams[0];
+    let bestPct = getGrade(best.score, best.maxScore).pct;
+
+    exams.forEach((item) => {
+      const p = getGrade(item.score, item.maxScore).pct;
+      totalPct += p;
+      if (p > bestPct) {
+        best = item;
+        bestPct = p;
+      }
+    });
+    document.getElementById("statAvg").textContent = `${Math.round(totalPct / exams.length)}%`;
+    document.getElementById("statTop").textContent = `${best.subject} (${bestPct}%)`;
+  } else {
+    document.getElementById("statAvg").textContent = "0%";
+    document.getElementById("statTop").textContent = "—";
+  }
+
+  // Render Posts
+  const feed = document.getElementById("postsFeed");
+  feed.innerHTML = "";
+
+  if (filtered.length === 0) {
+    feed.innerHTML = `<p style="color:#64748b;">No midterm records found. Add your first exam above!</p>`;
+    return;
+  }
+
+  filtered.forEach((item) => {
+    const { pct, letter } = getGrade(item.score, item.maxScore);
+    const card = document.createElement("article");
+    card.className = "post-card";
+    card.innerHTML = `
+      <div>
+        <div class="post-top">
+          <span class="subject-tag">${item.subject}</span>
+          <span class="post-date">${item.date}</span>
+        </div>
+        <div class="score-row">
+          <span class="score-num">${item.score} / ${item.maxScore}</span>
+          <span class="grade-badge">${pct}% • Grade ${letter}</span>
+        </div>
+        <p class="post-notes"></p>
+      </div>
+      <div class="post-footer">
+        <button type="button" class="btn btn-outline btn-sm edit-btn">Edit</button>
+        <button type="button" class="btn btn-danger btn-sm del-btn">Delete</button>
+      </div>
+    `;
+    card.querySelector(".post-notes").textContent = item.notes;
+
+    card.querySelector(".edit-btn").addEventListener("click", () => {
+      document.getElementById("editId").value = item.id;
+      document.getElementById("subject").value = item.subject;
+      document.getElementById("examDate").value = item.date;
+      document.getElementById("score").value = item.score;
+      document.getElementById("maxScore").value = item.maxScore;
+      document.getElementById("notes").value = item.notes;
+      document.getElementById("formTitle").textContent = "Edit Midterm Exam";
+      document.getElementById("saveBtn").textContent = "Update Record";
+      document.getElementById("cancelEditBtn").classList.remove("hidden");
+      updateLiveGrade();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    card.querySelector(".del-btn").addEventListener("click", () => {
+      exams = exams.filter((e) => e.id !== item.id);
+      saveExams();
+      renderAll();
+    });
+
+    feed.appendChild(card);
+  });
+}
+
+// Export & Import JSON for GitHub Sync
+document.getElementById("exportBtn").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(exams, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "exams.json";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById("importInput").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (Array.isArray(imported)) {
+        exams = imported;
+        saveExams();
+        renderAll();
+      }
+    } catch {
+      alert("Invalid JSON file.");
     }
   };
-  $("exportBtn").onclick = () => {
-    const blob = new Blob([JSON.stringify(all(), null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob); a.download = "exams.json"; a.click();
-    URL.revokeObjectURL(a.href);
-  };
-  $("importFile").onchange = async (e) => {
-    const f = e.target.files[0]; if (!f) return;
-    try {
-      const data = JSON.parse(await f.text());
-      if (!Array.isArray(data)) throw 0;
-      const ids = new Set(local.map((x) => x.id));
-      data.forEach((x) => { if (x && x.id && !ids.has(x.id)) local.push(x); });
-      saveLocal(); render();
-    } catch { alert("That file is not a valid exams.json"); }
-    e.target.value = "";
-  };
+  reader.readAsText(file);
+});
 
-  loadLocal();
-  loadPublished().then(render);
-  render();
-})();
+function openDashboard(account) {
+  authScreen.classList.add("hidden");
+  appScreen.classList.remove("hidden");
+  document.getElementById("studentBanner").textContent = `${account.name} (${account.studentId})`;
+  document.getElementById("examDate").valueAsDate = new Date();
+  loadExams();
+}
+
+// Check Existing Session on Page Load
+const activeSession = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+if (activeSession) {
+  openDashboard(activeSession);
+}

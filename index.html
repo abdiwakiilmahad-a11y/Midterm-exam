@@ -1,82 +1,177 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>My Midterm Exam Blog</title>
-  <meta name="description" content="A personal blog to record and review my midterm exams.">
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Midterms Exam Log In & Study Blog</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="hero">
-    <div class="wrap">
-      <p class="eyebrow">Midterm Exam Journal</p>
-      <h1>My Midterm Exam Blog</h1>
-      <p class="sub">Record every midterm, keep the questions, my answers and what I learned.</p>
-      <div class="stats" id="stats"></div>
+
+  <!-- LOGIN / REGISTER SCREEN -->
+  <div id="authScreen" class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="logo-badge">ME</div>
+        <h1>Midterms Exam Log In</h1>
+        <p>Personal Midterm Tracker &amp; Study Blog</p>
+      </div>
+
+      <div class="auth-tabs">
+        <button type="button" id="tabLogin" class="auth-tab active">Log In</button>
+        <button type="button" id="tabRegister" class="auth-tab">Create Account</button>
+      </div>
+
+      <div id="authError" class="alert-error hidden"></div>
+
+      <!-- Log In Form -->
+      <form id="loginForm" class="auth-form">
+        <div class="form-group">
+          <label for="loginUser">Username</label>
+          <input type="text" id="loginUser" placeholder="Enter your username" required />
+        </div>
+        <div class="form-group">
+          <label for="loginPin">Password / PIN</label>
+          <input type="password" id="loginPin" placeholder="Enter password or PIN" required />
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Log In to Midterms</button>
+        <button type="button" id="demoLoginBtn" class="btn btn-outline btn-full">
+          Quick Demo Student Login
+        </button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="registerForm" class="auth-form hidden">
+        <div class="form-group">
+          <label for="regName">Full Name</label>
+          <input type="text" id="regName" placeholder="e.g. Ahmed Hassan" required />
+        </div>
+        <div class="form-group">
+          <label for="regId">Student ID</label>
+          <input type="text" id="regId" placeholder="e.g. CS-2026-041" required />
+        </div>
+        <div class="form-group">
+          <label for="regUser">Choose Username</label>
+          <input type="text" id="regUser" placeholder="e.g. ahmed_cs" required />
+        </div>
+        <div class="form-group">
+          <label for="regPin">Choose Password / PIN</label>
+          <input type="password" id="regPin" placeholder="At least 4 characters" minlength="4" required />
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Save Account &amp; Enter</button>
+      </form>
     </div>
-  </header>
+  </div>
 
-  <main class="wrap">
-    <nav class="tabs" id="tabs" aria-label="Subjects"></nav>
-
-    <div class="toolbar">
-      <input type="search" id="search" placeholder="Search exams, topics, questions…" aria-label="Search">
-      <button class="btn primary" id="addBtn">+ Add exam</button>
-    </div>
-
-    <section id="list" class="list" aria-live="polite"></section>
-
-    <details class="admin">
-      <summary>Publish &amp; backup (GitHub)</summary>
-      <p>Exams you add are saved in <b>this browser</b>. To make them show for everyone on GitHub Pages: click <b>Export JSON</b>, replace <code>data/exams.json</code> in your repo with the downloaded file, then commit and push.</p>
-      <div class="row">
-        <button class="btn" id="exportBtn">Export JSON</button>
-        <label class="btn">Import JSON<input type="file" id="importFile" accept="application/json" hidden></label>
+  <!-- MAIN BLOG & EXAM DASHBOARD -->
+  <div id="appScreen" class="hidden">
+    <header class="navbar">
+      <div class="container nav-inner">
+        <div class="brand">
+          <span class="logo-badge small">ME</span>
+          <div>
+            <h2>Midterms Study Blog</h2>
+            <small id="studentBanner">Welcome, Student</small>
+          </div>
+        </div>
+        <div class="nav-actions">
+          <button type="button" id="exportBtn" class="btn btn-outline btn-sm">Export JSON</button>
+          <label class="btn btn-outline btn-sm file-label">
+            Import JSON
+            <input type="file" id="importInput" accept=".json" hidden />
+          </label>
+          <button type="button" id="logoutBtn" class="btn btn-danger btn-sm">Log Out</button>
+        </div>
       </div>
-    </details>
-  </main>
+    </header>
 
-  <footer class="wrap foot">Made with HTML, CSS &amp; JavaScript · Hosted on GitHub Pages</footer>
+    <main class="container main-content">
+      <!-- Stats Overview -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">Recorded Exams</span>
+          <strong id="statCount" class="stat-value">0 / 7</strong>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Average Score</span>
+          <strong id="statAvg" class="stat-value">0%</strong>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Highest Subject</span>
+          <strong id="statTop" class="stat-value">—</strong>
+        </div>
+      </section>
 
-  <dialog id="dlg">
-    <form id="form" method="dialog">
-      <h2 id="dlgTitle">Add exam</h2>
-      <div class="grid">
-        <label>Subject
-          <select id="f-subject" required></select>
-        </label>
-        <label>Title
-          <input id="f-title" required placeholder="e.g. Midterm – Chapters 1-4">
-        </label>
-        <label>Date
-          <input id="f-date" type="date" required>
-        </label>
-        <label>Score
-          <input id="f-score" type="number" min="0" step="0.5" placeholder="e.g. 18">
-        </label>
-        <label>Out of
-          <input id="f-total" type="number" min="0" step="0.5" placeholder="e.g. 20">
-        </label>
-        <label>Topics (comma separated)
-          <input id="f-topics" placeholder="Sets, Relations, Logic">
-        </label>
-      </div>
-      <label>Questions &amp; my answers
-        <textarea id="f-body" rows="9" placeholder="Write questions and answers here.&#10;For code use triple backticks:&#10;```sql&#10;SELECT * FROM students;&#10;```"></textarea>
-      </label>
-      <label>What I learned / mistakes
-        <textarea id="f-notes" rows="3"></textarea>
-      </label>
-      <label>Image link (optional – photo of the exam paper)
-        <input id="f-image" type="url" placeholder="https://… or images/exam1.jpg">
-      </label>
-      <div class="row end">
-        <button class="btn" type="button" id="cancelBtn">Cancel</button>
-        <button class="btn primary" type="submit" id="saveBtn" value="save">Save</button>
-      </div>
-    </form>
-  </dialog>
+      <!-- Insert / Edit Midterm Exam Form -->
+      <section class="card form-section">
+        <h3 id="formTitle">Record New Midterm Exam</h3>
+        <form id="examForm">
+          <input type="hidden" id="editId" value="" />
+          <div class="form-row">
+            <div class="form-group">
+              <label for="subject">Subject *</label>
+              <select id="subject" required>
+                <option value="Discrete Math">Discrete Math</option>
+                <option value="HTML">HTML</option>
+                <option value="RDMS">RDMS</option>
+                <option value="SQL">SQL</option>
+                <option value="Academic Writing">Academic Writing</option>
+                <option value="Physics">Physics</option>
+                <option value="C++">C++</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="examDate">Exam Date *</label>
+              <input type="date" id="examDate" required />
+            </div>
+          </div>
+
+          <div class="form-row three-col">
+            <div class="form-group">
+              <label for="score">Your Score *</label>
+              <input type="number" id="score" step="0.5" min="0" placeholder="e.g. 42" required />
+            </div>
+            <div class="form-group">
+              <label for="maxScore">Total Marks *</label>
+              <input type="number" id="maxScore" step="0.5" min="1" value="50" required />
+            </div>
+            <div class="form-group">
+              <label>Live Grade</label>
+              <div id="liveGrade" class="grade-preview">—</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="notes">Exam Details / Notes *</label>
+            <textarea id="notes" rows="3" placeholder="Record your midterm exam details, questions, or notes here..." required></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" id="saveBtn" class="btn btn-primary">Save Midterm Record</button>
+            <button type="button" id="cancelEditBtn" class="btn btn-outline hidden">Cancel Edit</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Filter & Search Bar -->
+      <section class="toolbar">
+        <div id="filterPills" class="pills">
+          <button type="button" class="pill active" data-subject="All">All (7)</button>
+          <button type="button" class="pill" data-subject="Discrete Math">Discrete Math</button>
+          <button type="button" class="pill" data-subject="HTML">HTML</button>
+          <button type="button" class="pill" data-subject="RDMS">RDMS</button>
+          <button type="button" class="pill" data-subject="SQL">SQL</button>
+          <button type="button" class="pill" data-subject="Academic Writing">Academic Writing</button>
+          <button type="button" class="pill" data-subject="Physics">Physics</button>
+          <button type="button" class="pill" data-subject="C++">C++</button>
+        </div>
+        <input type="search" id="searchInput" class="search-box" placeholder="Search notes or subject..." />
+      </section>
+
+      <!-- Midterm Posts Feed -->
+      <section id="postsFeed" class="posts-grid"></section>
+    </main>
+  </div>
 
   <script src="app.js"></script>
 </body>

@@ -1,14 +1,58 @@
 [
   {
-    "id": "sample-sql-1",
+    "id": "101",
+    "subject": "Discrete Math",
+    "date": "2026-11-10",
+    "score": 44,
+    "maxScore": 50,
+    "notes": "Covered truth tables, propositional logic, set operations, and proof by induction."
+  },
+  {
+    "id": "102",
+    "subject": "HTML",
+    "date": "2026-11-12",
+    "score": 47,
+    "maxScore": 50,
+    "notes": "Semantic tags, accessible forms, tables, and responsive viewport structure."
+  },
+  {
+    "id": "103",
+    "subject": "RDMS",
+    "date": "2026-11-14",
+    "score": 41,
+    "maxScore": 50,
+    "notes": "ER diagrams, primary/foreign keys, and database normalization up to 3NF."
+  },
+  {
+    "id": "104",
     "subject": "SQL",
-    "title": "Sample – SQL Midterm (delete me)",
+    "date": "2026-11-16",
+    "score": 45,
+    "maxScore": 50,
+    "notes": "INNER/LEFT JOIN queries, GROUP BY with HAVING, and nested subqueries."
+  },
+  {
+    "id": "105",
+    "subject": "Academic Writing",
+    "date": "2026-11-18",
+    "score": 43,
+    "maxScore": 50,
+    "notes": "Thesis statement clarity, paragraph coherence, and APA 7th edition citations."
+  },
+  {
+    "id": "106",
+    "subject": "Physics",
     "date": "2026-11-20",
-    "score": 18,
-    "total": 20,
-    "topics": ["SELECT", "JOIN", "GROUP BY"],
-    "body": "Q1. List all students older than 20.\n```sql\nSELECT * FROM students WHERE age > 20;\n```\nQ2. Count students per department.\n```sql\nSELECT dept, COUNT(*) FROM students GROUP BY dept;\n```",
-    "notes": "I forgot HAVING in one question. Review it before the final.",
-    "image": ""
+    "score": 39,
+    "maxScore": 50,
+    "notes": "Kinematics equations, Newton's laws of motion, work, and conservation of energy."
+  },
+  {
+    "id": "107",
+    "subject": "C++",
+    "date": "2026-11-22",
+    "score": 46,
+    "maxScore": 50,
+    "notes": "Pointers, arrays, functions, and basic object-oriented classes and constructors."
   }
 ]
